@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PT QR Bridge – Gerador de QR</title>
-
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -13,13 +12,8 @@
       line-height: 1.5;
     }
 
-    h1 {
-      margin-bottom: 0.2em;
-    }
-
-    p {
-      color: #444;
-    }
+    h1 { margin-bottom: 0.2em; }
+    p { color: #444; }
 
     label {
       display: block;
@@ -33,14 +27,9 @@
       font-size: 1em;
     }
 
-    button {
-      cursor: pointer;
-    }
+    button { cursor: pointer; }
 
-    #qrcode {
-      margin-top: 1.5em;
-      text-align: center;
-    }
+    #qrcode { margin-top: 1.5em; text-align: center; }
 
     #qrcode img, #qrcode canvas {
       border: 1px solid #ccc;
@@ -48,9 +37,7 @@
       background: white;
     }
 
-    #downloadBtn {
-      margin-top: 1em;
-    }
+    #downloadBtn { margin-top: 1em; }
   </style>
 </head>
 <body>
@@ -60,34 +47,29 @@
 
   <form id="qrForm">
     <label for="qrInput">Texto ou URL:</label>
-    <input 
-      type="text" 
-      id="qrInput" 
-      size="50" 
-      placeholder="https://exemplo.pt" 
-      required
-    >
+    <input type="text" id="qrInput" size="50" placeholder="https://exemplo.pt" required>
     <button type="submit">Gerar QR</button>
   </form>
 
   <div id="qrcode"></div>
 
   <button id="downloadBtn" disabled>Descarregar QR como PNG</button>
+
+  <!-- Inputs for print sheet -->
   <label for="qrSize">Tamanho do QR (cm):</label>
-<input type="number" id="qrSize" value="2.5" step="0.5" min="1" max="10">
+  <input type="number" id="qrSize" value="2.5" step="0.5" min="1" max="10">
 
-<label for="qrMargin">Margem da página (mm):</label>
-<input type="number" id="qrMargin" value="5" step="1" min="0" max="20">
+  <label for="qrMargin">Margem da página (mm):</label>
+  <input type="number" id="qrMargin" value="5" step="1" min="0" max="20">
 
-<label for="qrGap">Espaçamento entre QR (mm):</label>
-<input type="number" id="qrGap" value="2" step="1" min="0" max="10">
+  <label for="qrGap">Espaçamento entre QR (mm):</label>
+  <input type="number" id="qrGap" value="2" step="1" min="0" max="10">
 
-<button id="printA4Btn">Gerar folha A4</button>
+  <button id="printA4Btn">Gerar folha A4</button>
 
-  <!-- ✅ Local QR library -->
-  <script src="${window.location.origin}/js/qrcode.min.js"></script>
+  <!-- Local QR library -->
+  <script src="js/qrcode.min.js"></script>
 
-  <!-- ✅ Your app logic -->
   <script>
     const form = document.getElementById('qrForm');
     const input = document.getElementById('qrInput');
@@ -95,139 +77,103 @@
     const downloadBtn = document.getElementById('downloadBtn');
 
     function generateQR(text) {
-      // Clear previous QR
       qrcodeDiv.innerHTML = "";
-
-      // Generate new QR
-      new QRCode(qrcodeDiv, {
-        text: text,
-        width: 200,
-        height: 200
-      });
+      new QRCode(qrcodeDiv, { text, width: 200, height: 200 });
     }
 
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', function(e) {
       e.preventDefault();
-
       const value = input.value.trim();
       if (!value) return;
-
       generateQR(value);
-
       downloadBtn.disabled = false;
     });
 
     downloadBtn.addEventListener('click', function () {
       const img = qrcodeDiv.querySelector('img') || qrcodeDiv.querySelector('canvas');
-
       if (!img) return;
-
       const link = document.createElement('a');
       link.download = 'qr.png';
-
-      if (img.tagName === 'IMG') {
-        link.href = img.src;
-      } else {
-        link.href = img.toDataURL();
-      }
-
+      link.href = img.tagName === 'IMG' ? img.src : img.toDataURL();
       link.click();
     });
+
+    // ------------------ PRINT A4 FEATURE ------------------
+    const printBtn = document.getElementById('printA4Btn');
+
+    printBtn.addEventListener('click', function() {
+      const value = input.value.trim();
+      if (!value) return;
+
+      const sizeCm = parseFloat(document.getElementById('qrSize').value) || 2.5;
+      const marginMm = parseFloat(document.getElementById('qrMargin').value) || 5;
+      const gapMm = parseFloat(document.getElementById('qrGap').value) || 2;
+
+      const sizeMm = sizeCm * 10;
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      const usableWidth = pageWidth - 2 * marginMm;
+      const usableHeight = pageHeight - 2 * marginMm;
+
+      const cols = Math.floor((usableWidth + gapMm) / (sizeMm + gapMm));
+      const rows = Math.floor((usableHeight + gapMm) / (sizeMm + gapMm));
+      const total = cols * rows;
+
+      const printWindow = window.open('', '_blank');
+
+      // Write HTML to print window
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>A4 QR Sheet</title>
+          <style>
+            body { margin:0; padding:0; }
+            .page {
+              width: 210mm;
+              height: 297mm;
+              padding: ${marginMm}mm;
+              box-sizing: border-box;
+              display: grid;
+              grid-template-columns: repeat(${cols}, ${sizeMm}mm);
+              grid-auto-rows: ${sizeMm}mm;
+              gap: ${gapMm}mm;
+              justify-content: center;
+              align-content: center;
+            }
+            .qr { display:flex; justify-content:center; align-items:center; }
+            @media print { body { margin:0; } }
+          </style>
+        </head>
+        <body>
+          <div class="page" id="grid"></div>
+
+          <script>
+            const grid = document.getElementById('grid');
+            const script = document.createElement('script');
+            script.src = "${window.location.origin}/js/qrcode.min.js";
+            script.onload = () => {
+              for (let i=0; i<${total}; i++) {
+                const div = document.createElement('div');
+                div.className = 'qr';
+                grid.appendChild(div);
+                new QRCode(div, {
+                  text: "${value}",
+                  width: ${sizeMm} * 3.78,
+                  height: ${sizeMm} * 3.78
+                });
+              }
+              window.print();
+            };
+            document.head.appendChild(script);
+          <\/script>
+
+        </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+    });
   </script>
-  const printBtn = document.getElementById('printA4Btn');
-
-printBtn.addEventListener('click', function () {
-  const value = input.value.trim();
-  if (!value) return;
-
-  const sizeCm = parseFloat(document.getElementById('qrSize').value) || 2.5;
-  const marginMm = parseFloat(document.getElementById('qrMargin').value) || 5;
-  const gapMm = parseFloat(document.getElementById('qrGap').value) || 2;
-
-  const sizeMm = sizeCm * 10;
-
-  const pageWidth = 210;
-  const pageHeight = 297;
-
-  // Available space after margins
-  const usableWidth = pageWidth - (marginMm * 2);
-  const usableHeight = pageHeight - (marginMm * 2);
-
-  // Calculate how many fit INCLUDING gaps
-  const cols = Math.floor((usableWidth + gapMm) / (sizeMm + gapMm));
-  const rows = Math.floor((usableHeight + gapMm) / (sizeMm + gapMm));
-
-  const total = cols * rows;
-
-  const printWindow = window.open('', '_blank');
-
-  printWindow.document.write(`
-    <html>
-    <head>
-      <title>A4 QR Sheet</title>
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-        }
-
-        .page {
-          width: 210mm;
-          height: 297mm;
-          padding: ${marginMm}mm;
-          box-sizing: border-box;
-
-          display: grid;
-          grid-template-columns: repeat(${cols}, ${sizeMm}mm);
-          grid-auto-rows: ${sizeMm}mm;
-          gap: ${gapMm}mm;
-
-          justify-content: center;
-          align-content: center;
-        }
-
-        .qr {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        @media print {
-          body {
-            margin: 0;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="page" id="grid"></div>
-
-      <script src="${window.location.origin}/js/qrcode.min.js"></script>
-      <script>
-        const grid = document.getElementById('grid');
-
-        for (let i = 0; i < ${total}; i++) {
-          const div = document.createElement('div');
-          div.className = 'qr';
-          grid.appendChild(div);
-
-          new QRCode(div, {
-            text: "${value}",
-            width: ${sizeMm} * 3.78,
-            height: ${sizeMm} * 3.78
-          });
-        }
-
-        window.onload = () => {
-          window.print();
-        };
-      <\/script>
-    </body>
-    </html>
-  `);
-
-  printWindow.document.close();
-});
-
 </body>
 </html>
