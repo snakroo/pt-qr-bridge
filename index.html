@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PT QR Bridge – Gerador de QR</title>
+
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -11,93 +12,118 @@
       max-width: 600px;
       line-height: 1.5;
     }
+
+    h1 {
+      margin-bottom: 0.2em;
+    }
+
+    p {
+      color: #444;
+    }
+
     label {
       display: block;
       margin-top: 1em;
       font-weight: 600;
     }
+
     input, button {
       margin-top: 0.5em;
       padding: 0.5em 0.75em;
       font-size: 1em;
     }
+
     button {
       cursor: pointer;
     }
+
     #qrcode {
       margin-top: 1.5em;
       text-align: center;
     }
-    #qrCanvas {
+
+    #qrcode img, #qrcode canvas {
       border: 1px solid #ccc;
       padding: 0.5em;
+      background: white;
+    }
+
+    #downloadBtn {
+      margin-top: 1em;
     }
   </style>
 </head>
 <body>
+
   <h1>PT QR Bridge – Gerador de QR</h1>
   <p>Introduza um texto ou URL para gerar um código QR. Este gerador é <strong>sem registo de dados</strong>.</p>
 
   <form id="qrForm">
     <label for="qrInput">Texto ou URL:</label>
-    <input type="text" id="qrInput" size="50" placeholder="https://exemplo.pt" required>
+    <input 
+      type="text" 
+      id="qrInput" 
+      size="50" 
+      placeholder="https://exemplo.pt" 
+      required
+    >
     <button type="submit">Gerar QR</button>
   </form>
 
-  <div id="qrcode">
-    <canvas id="qrCanvas" width="200" height="200" style="display:none;"></canvas>
-  </div>
+  <div id="qrcode"></div>
+
   <button id="downloadBtn" disabled>Descarregar QR como PNG</button>
 
+  <!-- ✅ Local QR library -->
+  <script src="js/qrcode.min.js"></script>
+
+  <!-- ✅ Your app logic -->
   <script>
     const form = document.getElementById('qrForm');
     const input = document.getElementById('qrInput');
-    const qrCanvas = document.getElementById('qrCanvas');
-    const downloadBtn = document.getElementById('downloadBtn');
     const qrcodeDiv = document.getElementById('qrcode');
+    const downloadBtn = document.getElementById('downloadBtn');
 
-    // Simple QR code generator (no external dependencies)
     function generateQR(text) {
-      const canvas = qrCanvas;
-      const ctx = canvas.getContext('2d');
-      const size = 200;
-      
-      // Clear canvas
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, size, size);
-      
-      // Simple QR pattern (for demo purposes)
-      ctx.fillStyle = 'black';
-      // Outer frame
-      ctx.fillRect(0, 0, 8, 8);
-      ctx.fillRect(size-8, 0, 8, 8);
-      ctx.fillRect(0, size-8, 8, 8);
-      ctx.fillRect(size-8, size-8, 8, 8);
-      
-      // Inner patterns
-      ctx.fillRect(24, 24, 16, 16);
-      ctx.fillRect(size-40, 24, 16, 16);
-      ctx.fillRect(24, size-40, 16, 16);
-      
-      // Center data area
-      ctx.fillRect(64, 64, 72, 72);
-      
-      canvas.style.display = 'block';
-      return canvas;
+      // Clear previous QR
+      qrcodeDiv.innerHTML = "";
+
+      // Generate new QR
+      new QRCode(qrcodeDiv, {
+        text: text,
+        width: 200,
+        height: 200
+      });
     }
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      generateQR(input.value);
+
+      const value = input.value.trim();
+      if (!value) return;
+
+      generateQR(value);
+
       downloadBtn.disabled = false;
-      
-      downloadBtn.onclick = function () {
-        const link = document.createElement('a');
-        link.download = 'qr.png';
-        link.href = qrCanvas.toDataURL();
-        link.click();
-      };
+    });
+
+    downloadBtn.addEventListener('click', function () {
+      const img = qrcodeDiv.querySelector('img') || qrcodeDiv.querySelector('canvas');
+
+      if (!img) return;
+
+      const link = document.createElement('a');
+      link.download = 'qr.png';
+
+      if (img.tagName === 'IMG') {
+        link.href = img.src;
+      } else {
+        link.href = img.toDataURL();
+      }
+
+      link.click();
     });
   </script>
+
 </body>
 </html>
