@@ -36,7 +36,7 @@
   </style>
   <!-- QRCode.js (inlined from soldair/node-qrcode) -->
   <script>
-    const Utils = require('./utils')
+const Utils = require('./utils')
 const ECLevel = require('./error-correction-level')
 const BitBuffer = require('./bit-buffer')
 const BitMatrix = require('./bit-matrix')
@@ -532,6 +532,10 @@ exports.create = function create (data, options) {
   return createSymbol(data, version, errorCorrectionLevel, mask)
 }
   </script>
+  <script>
+  // Make QRCode globally available for your "Gerar QR" button
+  window.QRCode = QRCode;
+</script>
 </head>
 <body>
 
