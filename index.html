@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PT QR Bridge – Gerador de QR</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 2em auto;
+      max-width: 600px;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      margin-top: 1em;
+      font-weight: 600;
+    }
+    input,
+    button {
+      margin-top: 0.5em;
+      padding: 0.5em 0.75em;
+      font-size: 1em;
+    }
+    button {
+      cursor: pointer;
+    }
+    #qrcode {
+      margin-top: 1.5em;
+      text-align: center;
+    }
+    #qrcode img {
+      border: 1px solid #ccc;
+      padding: 0.5em;
+    }
+  </style>
+  <!-- QRCode.js (MIT‑licensed) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode.js/lib/qrcode.min.js"></script>
+</head>
+<body>
+
+  <h1>PT QR Bridge – Gerador de QR</h1>
+  <p>
+    Introduza um texto ou URL para gerar um código QR.  
+    Este gerador é <strong>sem registo de dados</strong>: tudo acontece no seu navegador.
+  </p>
+
+  <form id="qrForm">
+    <label for="qrInput">Texto ou URL:</label>
+    <input type="text" id="qrInput" size="50" placeholder="https://exemplo.pt" required>
+    <button type="submit">Gerar QR</button>
+  </form>
+
+  <div id="qrcode"></div>
+  <button id="downloadBtn" disabled>Descarregar QR como PNG</button>
+
+  <script>
+    const form = document.getElementById('qrForm');
+    const input = document.getElementById('qrInput');
+    const qrcodeDiv = document.getElementById('qrcode');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      qrcodeDiv.innerHTML = ''; // clear previous QR
+      downloadBtn.disabled = true;
+
+      new QRCode(qrcodeDiv, {
+        text: input.value,
+        width: 200,
+        height: 200
+      });
+
+      // Assume QR is in an <img>, create a download link
+      const img = qrcodeDiv.querySelector('img');
+      if (img) {
+        downloadBtn.disabled = false;
+        downloadBtn.onclick = function () {
+          const a = document.createElement('a');
+          a.href = img.src;
+          a.download = 'qr.png';
+          a.click();
+        };
+      }
+    });
+  </script>
+
+</body>
+</html>
